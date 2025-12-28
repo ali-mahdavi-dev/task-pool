@@ -30,8 +30,8 @@ func (s *taskService) Create(ctx context.Context, command *contracts.CreateTask)
 	return nil
 }
 
-func (s *taskService) Get(ctx context.Context, id string) (*entity.Task, error) {
-	task, err := s.taskRepository.Get(ctx, id)
+func (s *taskService) GetByID(ctx context.Context, id string) (*entity.Task, error) {
+	task, err := s.taskRepository.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrTaskNotFound) {
 			return nil, err

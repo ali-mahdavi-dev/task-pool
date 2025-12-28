@@ -6,10 +6,11 @@ import (
 )
 
 type TaskService interface {
+	// Create creates a new task
 	Create(ctx context.Context, task *CreateTask) error
-	Get(ctx context.Context, id string) (*entity.Task, error)
-	// Update(ctx context.Context, task *entity.Task) error
-	// Delete(ctx context.Context, id string) error
+
+	// GetByID returns a task by its ID
+	GetByID(ctx context.Context, id string) (*entity.Task, error)
 }
 
 type CreateTask struct {
