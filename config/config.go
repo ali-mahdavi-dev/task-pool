@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	Server   Server
-	Database Database
+	Server     Server
+	Database   Database
+	TaskWorker TaskWorker
 }
 
 type Server struct {
@@ -29,6 +30,11 @@ type Database struct {
 	Name               string `envconfig:"DATABASE_NAME" default:"task_pool"`
 	SSLMode            string `envconfig:"DATABASE_SSLMODE" default:"disable"`
 	MaxOpenConnections int    `envconfig:"DATABASE_MAX_OPEN_CONNECTION" default:"100"`
+}
+
+type TaskWorker struct {
+	Workers   int `envconfig:"TASK_WORKER_WORKERS" default:"3"`
+	QueueSize int `envconfig:"TASK_WORKER_QUEUE_SIZE" default:"3"`
 }
 
 func Load() (*Config, error) {

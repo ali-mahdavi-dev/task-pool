@@ -11,5 +11,9 @@ type HandlerOptions struct {
 }
 
 func RegisterHttpHandlers(app *fiber.App, options HandlerOptions) {
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendString("OK")
+	})
+
 	app.Post("/tasks", options.TaskHandler.CreateTask)
 }

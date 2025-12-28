@@ -1,13 +1,16 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"task-pool/config"
 	postgresrepo "task-pool/internal/adapter/repository/postgres"
 	service "task-pool/internal/application"
+	"task-pool/internal/domain/entity"
 	"task-pool/internal/entrypoint"
 	"task-pool/internal/entrypoint/handler"
+	"task-pool/internal/worker"
 	"task-pool/pkg/logger"
 
 	"github.com/gofiber/fiber/v2"
@@ -56,9 +59,8 @@ func bootstrap(app *fiber.App, conf config.Config) error {
 		return fmt.Errorf("failed to setup database: %w", err)
 	}
 
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("OK")
-	})
+	// Initialize channel
+	taskChannel := make(chan *entity.Task, conf.TaskWorker.QueueSize)
 
 	// Initialize repository
 	taskRepository := postgresrepo.NewTaskRepository(db)
@@ -73,6 +75,12 @@ func bootstrap(app *fiber.App, conf config.Config) error {
 	entrypoint.RegisterHttpHandlers(app, entrypoint.HandlerOptions{
 		TaskHandler: taskHandler,
 	})
+
+	// Initialize worker
+	taskWorker := worker.NewTaskWorker(taskRepository, conf, taskChannel)
+
+	// Start worker
+	taskWorker.Run(context.Background())
 
 	return nil
 }
