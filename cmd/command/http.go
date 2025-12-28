@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"task-pool/config"
 	postgresrepo "task-pool/internal/adapter/repository/postgres"
-	service "task-pool/internal/application"
 	"task-pool/internal/domain/entity"
 	"task-pool/internal/entrypoint"
 	"task-pool/internal/entrypoint/handler"
+	"task-pool/internal/service"
 	"task-pool/internal/worker"
 	"task-pool/pkg/logger"
 
@@ -31,28 +31,24 @@ func runHTTPServerCMD() *cobra.Command {
 
 			log.Println("starting task-pool http server")
 
-			return runHTTPServer(cfg)
+			return runHTTPServer(Cfg)
 		},
 	}
 }
 
-func runHTTPServer(conf config.Config) error {
+func runHTTPServer(cfg config.Config) error {
 	app := fiber.New()
 
-	// Create context for graceful shutdown
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	// Bootstrap the application
-	bootstrapResult, bErr := bootstrap(ctx, app, conf)
+	bootstrapResult, bErr := bootstrap(app, cfg)
 	if bErr != nil {
 		return bErr
 	}
 
-	shutdown(ctx, app, bootstrapResult, conf)
-	logger.Info("Starting HTTP server on port").WithInt("port", conf.Server.Port).Log()
+	shutdown(app, bootstrapResult, cfg)
+	logger.Info("Starting HTTP server on port").WithInt("port", cfg.Server.Port).Log()
 
-	aErr := app.Listen(fmt.Sprintf(":%d", conf.Server.Port))
+	aErr := app.Listen(fmt.Sprintf(":%d", cfg.Server.Port))
 	if aErr != nil {
 		logger.Error("Failed to start HTTP server").WithError(aErr).Log()
 		return fmt.Errorf("failed to start HTTP server: %w", aErr)
@@ -63,17 +59,18 @@ func runHTTPServer(conf config.Config) error {
 }
 
 type bootstrapResult struct {
-	taskWorker worker.Worker[*entity.Task]
+	taskWorker  worker.Worker[*entity.Task]
+	taskChannel chan *entity.Task
 }
 
-func bootstrap(ctx context.Context, app *fiber.App, conf config.Config) (*bootstrapResult, error) {
-	db, err := setupDB(conf)
+func bootstrap(app *fiber.App, cfg config.Config) (*bootstrapResult, error) {
+	db, err := setupDB(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup database: %w", err)
 	}
 
 	// Initialize channel
-	taskChannel := make(chan *entity.Task, conf.TaskWorker.QueueSize)
+	taskChannel := make(chan *entity.Task, cfg.TaskWorker.QueueSize)
 
 	// Initialize repository
 	taskRepository := postgresrepo.NewTaskRepository(db)
@@ -90,24 +87,25 @@ func bootstrap(ctx context.Context, app *fiber.App, conf config.Config) (*bootst
 	})
 
 	// Initialize worker
-	taskWorker := worker.NewTaskWorker(taskRepository, conf, taskChannel)
+	taskWorker := worker.NewTaskWorker(taskRepository, cfg, taskChannel)
 
 	// Start worker with context
 	taskWorker.Run(context.Background())
 
 	return &bootstrapResult{
-		taskWorker: taskWorker,
+		taskWorker:  taskWorker,
+		taskChannel: taskChannel,
 	}, nil
 }
 
-func setupDB(conf config.Config) (*gorm.DB, error) {
+func setupDB(cfg config.Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		conf.Database.Host,
-		conf.Database.Port,
-		conf.Database.Username,
-		conf.Database.Password,
-		conf.Database.Name,
-		conf.Database.SSLMode)
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.Username,
+		cfg.Database.Password,
+		cfg.Database.Name,
+		cfg.Database.SSLMode)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -121,13 +119,13 @@ func setupDB(conf config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	sqlDB.SetMaxOpenConns(conf.Database.MaxOpenConnections)
+	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConnections)
 
 	logger.Info("Database connection successfully").Log()
 	return db, nil
 }
 
-func shutdown(ctx context.Context, app *fiber.App, bootstrapResult *bootstrapResult, conf config.Config) {
+func shutdown(app *fiber.App, bootstrapResult *bootstrapResult, conf config.Config) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
@@ -137,12 +135,16 @@ func shutdown(ctx context.Context, app *fiber.App, bootstrapResult *bootstrapRes
 		ctx, cancel := context.WithTimeout(context.Background(), conf.Server.ShutdownTimeout)
 		defer cancel()
 
-		bootstrapResult.taskWorker.Shutdown(ctx)
-		logger.Info("Worker shutdown successfully").Log()
-
-		if err := app.Shutdown(); err != nil {
+		if err := app.ShutdownWithContext(ctx); err != nil {
 			log.Printf("Error shutting down server: %v\n", err)
 		}
+
+		bootstrapResult.taskWorker.Shutdown()
+		logger.Info("Worker shutdown successfully").Log()
+
+		close(bootstrapResult.taskChannel)
+		logger.Info("Task channel closed successfully").Log()
+
 		logger.Info("Server shutdown successfully").Log()
 
 		<-ctx.Done()

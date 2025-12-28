@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"task-pool/internal/application/contracts"
 	"task-pool/internal/domain/entity"
 	"task-pool/internal/domain/repository"
+	"task-pool/internal/service/contracts"
+	"task-pool/pkg/apperror"
 )
 
 type taskService struct {
@@ -34,7 +35,7 @@ func (s *taskService) GetByID(ctx context.Context, id string) (*entity.Task, err
 	task, err := s.taskRepository.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrTaskNotFound) {
-			return nil, err
+			return nil, apperror.NotFound("task not found")
 		}
 
 		return nil, fmt.Errorf("failed to get task: %w", err)

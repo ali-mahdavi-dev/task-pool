@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"task-pool/internal/application/contracts"
+	"task-pool/internal/service/contracts"
 	"task-pool/pkg/apperror"
 
 	"github.com/gofiber/fiber/v2"

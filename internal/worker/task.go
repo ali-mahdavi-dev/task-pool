@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"math/rand"
+	"sync"
 	"task-pool/config"
 	"task-pool/internal/domain/entity"
 	"task-pool/internal/domain/repository"
@@ -11,37 +12,41 @@ import (
 )
 
 type taskWorker[T any] struct {
-	config         config.Config
+	ctx            context.Context
+	cfg            config.Config
 	taskChannel    chan *entity.Task
 	taskRepository repository.TaskRepository
+	wg             sync.WaitGroup
 }
 
 func NewTaskWorker(
 	taskRepository repository.TaskRepository,
-	config config.Config,
+	cfg config.Config,
 	taskChannel chan *entity.Task,
 ) Worker[*entity.Task] {
 	return &taskWorker[*entity.Task]{
-		config:         config,
+		cfg:            cfg,
 		taskChannel:    taskChannel,
 		taskRepository: taskRepository,
+		wg:             sync.WaitGroup{},
 	}
 }
 
 func (w *taskWorker[T]) Run(ctx context.Context) {
-	for i := 0; i < w.config.TaskWorker.Workers; i++ {
+	w.ctx = ctx
+	for i := 0; i < w.cfg.TaskWorker.Workers; i++ {
+		w.wg.Add(1)
 		go w.wroker(ctx)
 	}
 }
 
-func (w *taskWorker[T]) Shutdown(ctx context.Context) {
-	close(w.taskChannel)
-}
+func (w *taskWorker[T]) Shutdown() {}
 
 func (w *taskWorker[T]) wroker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			w.wg.Done()
 			return
 		case task := <-w.taskChannel:
 			w.handle(ctx, task)

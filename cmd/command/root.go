@@ -10,7 +10,7 @@ import (
 
 var (
 	envFile string
-	cfg     config.Config
+	Cfg     config.Config
 	rootCmd = &cobra.Command{
 		Use: "",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -37,7 +37,7 @@ func initializeConfigs() {
 		log.Fatalf("could not load configuration %s\n", err.Error())
 	}
 
-	cfg = *c
+	Cfg = *c
 }
 
 func Execute() {

@@ -1,12 +1,14 @@
 package apperror
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
 func HandleError(c *fiber.Ctx, err error) error {
 	if err == nil {
 		return nil
 	}
-	
+
 	var appErr *AppError
 	if _, ok := err.(*AppError); !ok {
 		appErr = &AppError{
