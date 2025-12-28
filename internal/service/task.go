@@ -21,6 +21,7 @@ func NewTaskService(taskRepository repository.TaskRepository) contracts.TaskServ
 
 func (s *taskService) Create(ctx context.Context, command *contracts.CreateTask) error {
 	task := entity.NewTask(command.Title, command.Description, entity.TaskStatusPending)
+
 	err := s.taskRepository.Create(ctx, task)
 	if err != nil {
 		return fmt.Errorf("failed to create task: %w", err)
@@ -31,7 +32,7 @@ func (s *taskService) Create(ctx context.Context, command *contracts.CreateTask)
 	return nil
 }
 
-func (s *taskService) GetByID(ctx context.Context, id string) (*entity.Task, error) {
+func (s *taskService) GetByID(ctx context.Context, id uint64) (*entity.Task, error) {
 	task, err := s.taskRepository.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrTaskNotFound) {
@@ -42,4 +43,13 @@ func (s *taskService) GetByID(ctx context.Context, id string) (*entity.Task, err
 	}
 
 	return task, nil
+}
+
+func (s *taskService) GetAll(ctx context.Context) ([]*entity.Task, error) {
+	tasks, err := s.taskRepository.FindAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tasks: %w", err)
+	}
+
+	return tasks, nil
 }

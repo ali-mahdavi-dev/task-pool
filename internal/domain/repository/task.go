@@ -12,6 +12,7 @@ var (
 
 type TaskRepository interface {
 	Create(ctx context.Context, task *entity.Task) error
-	FindByID(ctx context.Context, id string) (*entity.Task, error)
+	FindByID(ctx context.Context, id uint64) (*entity.Task, error)
+	FindAll(ctx context.Context) ([]*entity.Task, error)
 	Update(ctx context.Context, task *entity.Task) error
 }

@@ -31,10 +31,10 @@ func (r *taskRepository) Create(ctx context.Context, task *entity.Task) error {
 	return nil
 }
 
-func (r *taskRepository) FindByID(ctx context.Context, id string) (*entity.Task, error) {
+func (r *taskRepository) FindByID(ctx context.Context, id uint64) (*entity.Task, error) {
 	var task entity.Task
 
-	err := r.model(ctx).Where("id = ?", id).First(task).Error
+	err := r.model(ctx).Where("id = ?", id).First(&task).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, repository.ErrTaskNotFound
@@ -44,6 +44,17 @@ func (r *taskRepository) FindByID(ctx context.Context, id string) (*entity.Task,
 	}
 
 	return &task, nil
+}
+
+func (r *taskRepository) FindAll(ctx context.Context) ([]*entity.Task, error) {
+	var tasks []*entity.Task
+
+	err := r.model(ctx).Find(&tasks).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tasks: %w", err)
+	}
+
+	return tasks, nil
 }
 
 func (r *taskRepository) Update(ctx context.Context, task *entity.Task) error {

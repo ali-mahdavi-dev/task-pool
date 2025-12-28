@@ -10,7 +10,10 @@ type TaskService interface {
 	Create(ctx context.Context, task *CreateTask) error
 
 	// GetByID returns a task by its ID
-	GetByID(ctx context.Context, id string) (*entity.Task, error)
+	GetByID(ctx context.Context, id uint64) (*entity.Task, error)
+
+	// GetAll returns all tasks
+	GetAll(ctx context.Context) ([]*entity.Task, error)
 }
 
 type CreateTask struct {
