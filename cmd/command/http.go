@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"log"
 	"task-pool/config"
+	postgresrepo "task-pool/internal/adapter/repository/postgres"
+	service "task-pool/internal/application"
 	"task-pool/internal/entrypoint"
+	"task-pool/internal/entrypoint/handler"
 	"task-pool/pkg/logger"
 
 	"github.com/gofiber/fiber/v2"
@@ -37,6 +40,7 @@ func runHTTPServer(conf config.Config) error {
 	}
 
 	logger.Info("Starting HTTP server on port").WithInt("port", conf.Server.Port).Log()
+
 	aErr := app.Listen(fmt.Sprintf(":%d", conf.Server.Port))
 	if aErr != nil {
 		logger.Error("Failed to start HTTP server").WithError(aErr).Log()
@@ -47,7 +51,7 @@ func runHTTPServer(conf config.Config) error {
 }
 
 func bootstrap(app *fiber.App, conf config.Config) error {
-	_, err := setupDB(conf)
+	db, err := setupDB(conf)
 	if err != nil {
 		return fmt.Errorf("failed to setup database: %w", err)
 	}
@@ -56,8 +60,19 @@ func bootstrap(app *fiber.App, conf config.Config) error {
 		return c.SendString("OK")
 	})
 
+	// Initialize repository
+	taskRepository := postgresrepo.NewTaskRepository(db)
+
+	// Initialize service
+	taskService := service.NewTaskService(taskRepository)
+
+	// Initialize handler
+	taskHandler := handler.NewTaskHandler(taskService)
+
 	// Register handlers
-	entrypoint.RegisterHttpHandlers(app, entrypoint.HandlerOptions{})
+	entrypoint.RegisterHttpHandlers(app, entrypoint.HandlerOptions{
+		TaskHandler: taskHandler,
+	})
 
 	return nil
 }
@@ -85,6 +100,6 @@ func setupDB(conf config.Config) (*gorm.DB, error) {
 
 	sqlDB.SetMaxOpenConns(conf.Database.MaxOpenConnections)
 
-	logger.Info("Database connection established successfully").Log()
+	logger.Info("Database connection successfully").Log()
 	return db, nil
 }
