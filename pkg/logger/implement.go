@@ -143,6 +143,15 @@ func (l *logger) WithUint(key string, value uint) Logger {
 	return l
 }
 
+func (l *logger) WithUint64(key string, value uint64) Logger {
+	l.fields = append(l.fields, LogField{
+		Key:   key,
+		Value: value,
+		Type:  FieldTypeUint64,
+	})
+	return l
+}
+
 func (l *logger) WithFloat64(key string, value float64) Logger {
 	l.fields = append(l.fields, LogField{
 		Key:   key,

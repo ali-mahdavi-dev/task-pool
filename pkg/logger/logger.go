@@ -25,6 +25,7 @@ type Logger interface {
 	WithInt(key string, value int) Logger
 	WithInt64(key string, value int64) Logger
 	WithUint(key string, value uint) Logger
+	WithUint64(key string, value uint64) Logger
 	WithFloat64(key string, value float64) Logger
 	WithBool(key string, value bool) Logger
 	WithError(err error) Logger

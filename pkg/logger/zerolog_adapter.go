@@ -81,6 +81,12 @@ func (z *zerologAdapter) Log(level LogLevel, msg string, fields []LogField) {
 			} else {
 				event = event.Interface(field.Key, field.Value)
 			}
+		case FieldTypeUint64:
+			if uint64Val, ok := field.Value.(uint64); ok {
+				event = event.Uint64(field.Key, uint64Val)
+			} else {
+				event = event.Interface(field.Key, field.Value)
+			}
 		case FieldTypeFloat64:
 			if float64Val, ok := field.Value.(float64); ok {
 				event = event.Float64(field.Key, float64Val)

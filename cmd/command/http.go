@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"task-pool/config"
 	postgresrepo "task-pool/internal/adapter/repository/postgres"
 	service "task-pool/internal/application"
@@ -36,12 +39,17 @@ func runHTTPServerCMD() *cobra.Command {
 func runHTTPServer(conf config.Config) error {
 	app := fiber.New()
 
+	// Create context for graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Bootstrap the application
-	bErr := bootstrap(app, conf)
+	bootstrapResult, bErr := bootstrap(ctx, app, conf)
 	if bErr != nil {
 		return bErr
 	}
 
+	shutdown(ctx, app, bootstrapResult, conf)
 	logger.Info("Starting HTTP server on port").WithInt("port", conf.Server.Port).Log()
 
 	aErr := app.Listen(fmt.Sprintf(":%d", conf.Server.Port))
@@ -49,14 +57,19 @@ func runHTTPServer(conf config.Config) error {
 		logger.Error("Failed to start HTTP server").WithError(aErr).Log()
 		return fmt.Errorf("failed to start HTTP server: %w", aErr)
 	}
+	logger.Info("Graceful shutdown completed").Log()
 
 	return nil
 }
 
-func bootstrap(app *fiber.App, conf config.Config) error {
+type bootstrapResult struct {
+	taskWorker worker.Worker[*entity.Task]
+}
+
+func bootstrap(ctx context.Context, app *fiber.App, conf config.Config) (*bootstrapResult, error) {
 	db, err := setupDB(conf)
 	if err != nil {
-		return fmt.Errorf("failed to setup database: %w", err)
+		return nil, fmt.Errorf("failed to setup database: %w", err)
 	}
 
 	// Initialize channel
@@ -79,10 +92,12 @@ func bootstrap(app *fiber.App, conf config.Config) error {
 	// Initialize worker
 	taskWorker := worker.NewTaskWorker(taskRepository, conf, taskChannel)
 
-	// Start worker
+	// Start worker with context
 	taskWorker.Run(context.Background())
 
-	return nil
+	return &bootstrapResult{
+		taskWorker: taskWorker,
+	}, nil
 }
 
 func setupDB(conf config.Config) (*gorm.DB, error) {
@@ -110,4 +125,27 @@ func setupDB(conf config.Config) (*gorm.DB, error) {
 
 	logger.Info("Database connection successfully").Log()
 	return db, nil
+}
+
+func shutdown(ctx context.Context, app *fiber.App, bootstrapResult *bootstrapResult, conf config.Config) {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sig
+
+		ctx, cancel := context.WithTimeout(context.Background(), conf.Server.ShutdownTimeout)
+		defer cancel()
+
+		bootstrapResult.taskWorker.Shutdown(ctx)
+		logger.Info("Worker shutdown successfully").Log()
+
+		if err := app.Shutdown(); err != nil {
+			log.Printf("Error shutting down server: %v\n", err)
+		}
+		logger.Info("Server shutdown successfully").Log()
+
+		<-ctx.Done()
+	}()
+
 }

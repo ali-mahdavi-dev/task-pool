@@ -14,12 +14,13 @@ type Config struct {
 }
 
 type Server struct {
-	ServiceName  string        `envconfig:"SERVICE_NAME" default:"task-pool"`
-	Host         string        `envconfig:"SERVER_HOST" default:"0.0.0.0"`
-	Port         int           `envconfig:"SERVER_PORT" default:"8080"`
-	WriteTimeout time.Duration `envconfig:"SERVER_WRITE_TIMEOUT" default:"10s"`
-	ReadTimeout  time.Duration `envconfig:"SERVER_READ_TIMEOUT" default:"10s"`
-	Debug        bool          `envconfig:"SERVER_DEBUG" default:"false"`
+	ServiceName     string        `envconfig:"SERVICE_NAME" default:"task-pool"`
+	Host            string        `envconfig:"SERVER_HOST" default:"0.0.0.0"`
+	Port            int           `envconfig:"SERVER_PORT" default:"8080"`
+	WriteTimeout    time.Duration `envconfig:"SERVER_WRITE_TIMEOUT" default:"10s"`
+	ReadTimeout     time.Duration `envconfig:"SERVER_READ_TIMEOUT" default:"10s"`
+	Debug           bool          `envconfig:"SERVER_DEBUG" default:"false"`
+	ShutdownTimeout time.Duration `envconfig:"SERVER_SHUTDOWN_TIMEOUT" default:"10s"`
 }
 
 type Database struct {

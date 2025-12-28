@@ -2,9 +2,12 @@ package worker
 
 import (
 	"context"
+	"math/rand"
 	"task-pool/config"
 	"task-pool/internal/domain/entity"
 	"task-pool/internal/domain/repository"
+	"task-pool/pkg/logger"
+	"time"
 )
 
 type taskWorker[T any] struct {
@@ -31,6 +34,10 @@ func (w *taskWorker[T]) Run(ctx context.Context) {
 	}
 }
 
+func (w *taskWorker[T]) Shutdown(ctx context.Context) {
+	close(w.taskChannel)
+}
+
 func (w *taskWorker[T]) wroker(ctx context.Context) {
 	for {
 		select {
@@ -43,5 +50,22 @@ func (w *taskWorker[T]) wroker(ctx context.Context) {
 }
 
 func (w *taskWorker[T]) handle(ctx context.Context, command *entity.Task) {
-	
+	logger.Info("Starting task processing").
+		WithUint64("task_id", command.ID).
+		WithString("task_title", command.Title).
+		Log()
+
+	num := rand.Intn(5) + 1
+	duration := time.Duration(num) * time.Second
+
+	time.Sleep(duration)
+
+	command.Complete()
+	err := w.taskRepository.Update(ctx, command)
+	if err != nil {
+		logger.Error("Error creating task").WithError(err).Log()
+		return
+	}
+
+	logger.Info("Task completed successfully").WithUint64("task_id", command.ID).Log()
 }

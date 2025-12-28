@@ -43,6 +43,7 @@ const (
 	FieldTypeInt     FieldType = "int"
 	FieldTypeInt64   FieldType = "int64"
 	FieldTypeUint    FieldType = "uint"
+	FieldTypeUint64  FieldType = "uint64"
 	FieldTypeFloat64 FieldType = "float64"
 	FieldTypeBool    FieldType = "bool"
 	FieldTypeError   FieldType = "error"

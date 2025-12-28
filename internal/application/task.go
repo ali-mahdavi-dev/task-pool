@@ -10,6 +10,7 @@ import (
 )
 
 type taskService struct {
+	taskChannel    chan *entity.Task
 	taskRepository repository.TaskRepository
 }
 
@@ -18,11 +19,13 @@ func NewTaskService(taskRepository repository.TaskRepository) contracts.TaskServ
 }
 
 func (s *taskService) Create(ctx context.Context, command *contracts.CreateTask) error {
-	task := entity.NewTask(command.Title, command.Description)
+	task := entity.NewTask(command.Title, command.Description, entity.TaskStatusPending)
 	err := s.taskRepository.Create(ctx, task)
 	if err != nil {
 		return fmt.Errorf("failed to create task: %w", err)
 	}
+
+	s.taskChannel <- task
 
 	return nil
 }

@@ -43,7 +43,7 @@ func (r *taskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 }
 
 func (r *taskRepository) Update(ctx context.Context, task *entity.Task) error {
-	err := r.model(ctx).Updates(map[string]interface{}{
+	err := r.model(ctx).Where("id = ?", task.ID).Updates(map[string]interface{}{
 		"title":       task.Title,
 		"description": task.Description,
 	}).Error
