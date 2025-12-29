@@ -233,17 +233,13 @@ OK
 ### اجرای تست‌ها
 
 ```bash
-# اجرای تمام تست‌ها
 go test ./...
 
-# اجرای تست‌های یک پکیج خاص
 go test ./internal/service/...
 go test ./internal/worker/...
 
-# اجرای تست با نمایش جزئیات
 go test -v ./...
 
-# اجرای تست با نمایش coverage
 go test -cover ./...
 ```
 
