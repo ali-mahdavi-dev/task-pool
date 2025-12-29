@@ -94,9 +94,6 @@ graph TD
 ساده‌ترین روش برای اجرای پروژه:
 
 ```bash
-# کلون کردن پروژه
-git clone <repository-url>
-cd interview
 
 # اجرای با Docker Compose
 docker-compose up --build
@@ -148,26 +145,6 @@ TASK_WORKER_QUEUE_SIZE=100
 go run cmd/main.go http
 ```
 
-### ساخت Docker Image
-
-برای ساخت Docker image:
-
-```bash
-docker build -t task-pool:latest .
-```
-
-برای اجرای container:
-
-```bash
-docker run -p 8080:8080 \
-  -e DATABASE_HOST=host.docker.internal \
-  -e DATABASE_PORT=5432 \
-  -e DATABASE_USERNAME=postgres \
-  -e DATABASE_PASSWORD=postgres \
-  -e DATABASE_NAME=task_pool \
-  task-pool:latest
-```
-
 ## API Documentation
 
 ### Base URL
@@ -197,17 +174,6 @@ http://localhost:8080/api/v1
 }
 ```
 
-**Example:**
-
-```bash
-curl -X POST http://localhost:8080/api/v1/tasks \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Process Payment",
-    "description": "Process customer payment for order #123"
-  }'
-```
-
 ### ۲. دریافت تمام تسک‌ها
 
 **Endpoint:** `GET /api/v1/tasks`
@@ -225,12 +191,6 @@ curl -X POST http://localhost:8080/api/v1/tasks \
     "UpdatedAt": "2024-01-01T00:05:00Z"
   }
 ]
-```
-
-**Example:**
-
-```bash
-curl http://localhost:8080/api/v1/tasks
 ```
 
 ### ۳. دریافت تسک با ID
@@ -258,12 +218,6 @@ curl http://localhost:8080/api/v1/tasks
 }
 ```
 
-**Example:**
-
-```bash
-curl http://localhost:8080/api/v1/tasks/1
-```
-
 ### ۴. Health Check
 
 **Endpoint:** `GET /health`
@@ -274,47 +228,7 @@ curl http://localhost:8080/api/v1/tasks/1
 OK
 ```
 
-**Example:**
-
-```bash
-curl http://localhost:8080/health
-```
-
-### مثال کامل استفاده
-
-```bash
-# 1. ایجاد یک تسک جدید
-curl -X POST http://localhost:8080/api/v1/tasks \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Process Payment",
-    "description": "Process customer payment for order #123"
-  }'
-
-# خروجی: {"message":"Task created successfully"}
-
-# 2. منتظر می‌مانیم تا Worker تسک را پردازش کند (1-5 ثانیه)
-
-# 3. بررسی وضعیت تسک
-curl http://localhost:8080/api/v1/tasks/1
-
-# خروجی (پس از پردازش):
-# {
-#   "ID": 1,
-#   "Title": "Process Payment",
-#   "Description": "Process customer payment for order #123",
-#   "Status": "completed",
-#   "CreatedAt": "2024-01-01T00:00:00Z",
-#   "UpdatedAt": "2024-01-01T00:05:00Z"
-# }
-
-# 4. دریافت تمام تسک‌ها
-curl http://localhost:8080/api/v1/tasks
-```
-
 ## تست‌ها
-
-پروژه شامل تست‌های واحد و همزمانی است که پوشش مناسبی از کد را فراهم می‌کند.
 
 ### اجرای تست‌ها
 
@@ -331,10 +245,6 @@ go test -v ./...
 
 # اجرای تست با نمایش coverage
 go test -cover ./...
-
-# اجرای تست با گزارش coverage کامل
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
 ```
 
 ### تست‌های موجود
@@ -353,15 +263,6 @@ go tool cover -html=coverage.out
 - ✅ تست تغییر وضعیت تسک به completed
 - ✅ تست پردازش همزمان چندین تسک
 - ✅ تست Worker Pool با چند Worker
-
-### Coverage
-
-برای مشاهده coverage کامل:
-
-```bash
-go test -coverprofile=coverage.out ./...
-go tool cover -func=coverage.out
-```
 
 ## Worker Pool
 
@@ -491,34 +392,3 @@ graph TD
 - استفاده از Testify برای Assertion
 - تست‌های همزمانی برای Worker Pool
 - Mock Repository برای تست Service Layer
-
-## مشکلات احتمالی و راه‌حل
-
-### خطای اتصال به دیتابیس
-
-اگر با خطای اتصال به دیتابیس مواجه شدید:
-
-1. مطمئن شوید PostgreSQL در حال اجرا است
-2. اطلاعات اتصال در `.env` را بررسی کنید
-3. در Docker Compose، مطمئن شوید که سرویس `postgres` healthy است
-
-### تسک‌ها پردازش نمی‌شوند
-
-1. تعداد Workerها را افزایش دهید (`TASK_WORKER_WORKERS`)
-2. اندازه Queue را افزایش دهید (`TASK_WORKER_QUEUE_SIZE`)
-3. لاگ‌های اپلیکیشن را بررسی کنید
-
-### خطای Port در حال استفاده
-
-اگر پورت 8080 در حال استفاده است:
-
-```bash
-# تغییر پورت در .env
-SERVER_PORT=8081
-```
-
----
-
-**نویسنده**: [نام شما]  
-**تاریخ**: 2024  
-**نسخه**: 1.0.0
