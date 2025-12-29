@@ -29,7 +29,7 @@ func init() {
 func initializeConfigs() {
 	err := godotenv.Load(envFile)
 	if err != nil {
-		panic(err)
+		log.Printf("warning: could not load .env file: %v\n", err)
 	}
 
 	c, err := config.Load()

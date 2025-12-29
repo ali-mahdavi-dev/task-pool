@@ -76,7 +76,7 @@ func bootstrap(app *fiber.App, cfg config.Config) (*bootstrapResult, error) {
 	taskRepository := postgresrepo.NewTaskRepository(db)
 
 	// Initialize service
-	taskService := service.NewTaskService(taskRepository)
+	taskService := service.NewTaskService(taskRepository, taskChannel)
 
 	// Initialize handler
 	taskHandler := handler.NewTaskHandler(taskService)
@@ -120,6 +120,13 @@ func setupDB(cfg config.Config) (*gorm.DB, error) {
 	}
 
 	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConnections)
+
+	// Auto migrate database tables
+	err = db.AutoMigrate(&entity.Task{})
+	if err != nil {
+		logger.Error("Failed to auto migrate database").WithError(err).Log()
+		return nil, fmt.Errorf("failed to auto migrate database: %w", err)
+	}
 
 	logger.Info("Database connection successfully").Log()
 	return db, nil

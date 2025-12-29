@@ -9,10 +9,11 @@ func HandleError(c *fiber.Ctx, err error) error {
 		return nil
 	}
 
-	var appErr *AppError
-	if _, ok := err.(*AppError); !ok {
+	appErr, ok := err.(*AppError)
+	if !ok {
 		appErr = &AppError{
 			Code:    "INTERNAL_SERVER_ERROR",
+			Status:  500,
 			Message: "Internal server error",
 			Details: err.Error(),
 		}

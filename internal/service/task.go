@@ -15,8 +15,11 @@ type taskService struct {
 	taskRepository repository.TaskRepository
 }
 
-func NewTaskService(taskRepository repository.TaskRepository) contracts.TaskService {
-	return &taskService{taskRepository: taskRepository}
+func NewTaskService(taskRepository repository.TaskRepository, taskChannel chan *entity.Task) contracts.TaskService {
+	return &taskService{
+		taskRepository: taskRepository,
+		taskChannel:    taskChannel,
+	}
 }
 
 func (s *taskService) Create(ctx context.Context, command *contracts.CreateTask) error {
