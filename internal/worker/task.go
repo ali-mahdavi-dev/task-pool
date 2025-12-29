@@ -60,7 +60,6 @@ func (w *taskWorker[T]) handle(ctx context.Context, command *entity.Task) {
 		WithString("task_title", command.Title).
 		Log()
 
-	rand.Seed(time.Now().UnixNano())
 	num := rand.Intn(5) + 1
 	duration := time.Duration(num) * time.Second
 
