@@ -1,9 +1,147 @@
+definitions:
+  task-pool_internal_domain_entity.Task:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        $ref: '#/definitions/task-pool_internal_domain_entity.TaskStatus'
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  task-pool_internal_domain_entity.TaskStatus:
+    enum:
+    - pending
+    - completed
+    - failed
+    type: string
+    x-enum-varnames:
+    - TaskStatusPending
+    - TaskStatusCompleted
+    - TaskStatusFailed
+  task-pool_internal_service_contracts.CreateTask:
+    properties:
+      description:
+        maxLength: 255
+        minLength: 3
+        type: string
+      title:
+        maxLength: 255
+        minLength: 3
+        type: string
+    required:
+    - description
+    - title
+    type: object
 info:
   contact: {}
   description: task-pool API documentation
   title: task-pool API Documentation
   version: 1.0.0
-paths: {}
+paths:
+  /api/v1/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all tasks in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of tasks
+          schema:
+            items:
+              $ref: '#/definitions/task-pool_internal_domain_entity.Task'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a new task with title and description
+      parameters:
+      - description: Task creation request
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/task-pool_internal_service_contracts.CreateTask'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task created successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request - invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new task
+      tags:
+      - tasks
+  /api/v1/tasks/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a specific task by its unique identifier
+      parameters:
+      - description: Task ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task details
+          schema:
+            $ref: '#/definitions/task-pool_internal_domain_entity.Task'
+        "400":
+          description: Bad request - invalid ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Task not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get task by ID
+      tags:
+      - tasks
 schemes:
 - http
 - https

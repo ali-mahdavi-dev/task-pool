@@ -145,6 +145,16 @@ go run cmd/main.go http
 
 ## API Documentation
 
+### Swagger UI
+
+برای مشاهده مستندات کامل API و تست endpoint‌ها، می‌توانید از Swagger UI استفاده کنید:
+
+**آدرس Swagger UI:**
+
+```
+http://localhost:8080/swagger/
+```
+
 ### Base URL
 
 ```
