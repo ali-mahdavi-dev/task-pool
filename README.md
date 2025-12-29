@@ -107,6 +107,18 @@ docker-compose up --build
 
 API در آدرس `http://localhost:8080` در دسترس خواهد بود.
 
+برای اجرا در پس‌زمینه:
+
+```bash
+docker-compose up -d --build
+```
+
+برای توقف:
+
+```bash
+docker-compose down
+```
+
 ### روش ۲: راه‌اندازی دستی
 
 #### ۱. نصب وابستگی‌ها
@@ -174,11 +186,51 @@ http://localhost:8080/api/v1
 }
 ```
 
+**مثال با curl:**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Task Title",
+    "description": "Task Description"
+  }'
+```
+
+**پاسخ:**
+
+```json
+{
+  "message": "Task created successfully"
+}
+```
+
 ### ۲. دریافت تمام تسک‌ها
 
 **Endpoint:** `GET /api/v1/tasks`
 
 **Response (200 OK):**
+
+```json
+[
+  {
+    "ID": 1,
+    "Title": "Task Title",
+    "Description": "Task Description",
+    "Status": "completed",
+    "CreatedAt": "2024-01-01T00:00:00Z",
+    "UpdatedAt": "2024-01-01T00:05:00Z"
+  }
+]
+```
+
+**مثال با curl:**
+
+```bash
+curl -X GET http://localhost:8080/api/v1/tasks
+```
+
+**پاسخ:**
 
 ```json
 [
@@ -218,11 +270,50 @@ http://localhost:8080/api/v1
 }
 ```
 
+**مثال با curl:**
+
+```bash
+curl -X GET http://localhost:8080/api/v1/tasks/1
+```
+
+**پاسخ موفق:**
+
+```json
+{
+  "ID": 1,
+  "Title": "Task Title",
+  "Description": "Task Description",
+  "Status": "completed",
+  "CreatedAt": "2024-01-01T00:00:00Z",
+  "UpdatedAt": "2024-01-01T00:05:00Z"
+}
+```
+
+**پاسخ خطا (404):**
+
+```json
+{
+  "error": "task not found"
+}
+```
+
 ### ۴. Health Check
 
 **Endpoint:** `GET /health`
 
 **Response (200 OK):**
+
+```
+OK
+```
+
+**مثال با curl:**
+
+```bash
+curl -X GET http://localhost:8080/health
+```
+
+**پاسخ:**
 
 ```
 OK

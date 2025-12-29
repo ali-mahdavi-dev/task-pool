@@ -13,170 +13,132 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestTaskWorker_Handle(t *testing.T) {
-	ctx := context.Background()
+// testFixture contains all test dependencies
+type testFixture struct {
+	mockRepo    *testmock.TaskRepository
+	taskChannel chan *entity.Task
+	cfg         config.Config
+	task        *entity.Task
+	ctx         context.Context
+	worker      *taskWorker[*entity.Task]
+}
 
-	t.Run("successful task handling", func(t *testing.T) {
-		mockRepo := testmock.NewTaskRepository()
-		taskChannel := make(chan *entity.Task, 10)
-		cfg := config.Config{
+// setupFixture creates a simple test fixture with default values
+func setupFixture() *testFixture {
+	f := &testFixture{
+		mockRepo:    testmock.NewTaskRepository(),
+		taskChannel: make(chan *entity.Task, 10),
+		cfg: config.Config{
 			TaskWorker: config.TaskWorker{
 				Workers: 1,
 			},
-		}
-
-		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
-
-		task := &entity.Task{
+		},
+		task: &entity.Task{
 			ID:          1,
 			Title:       "Test Task",
 			Description: "Test Description",
 			Status:      entity.TaskStatusPending,
-		}
+		},
+		ctx: context.Background(),
+	}
+	
+	// Create worker
+	f.worker = NewTaskWorker(f.mockRepo, uint64(f.cfg.TaskWorker.Workers), f.taskChannel).(*taskWorker[*entity.Task])
+	
+	return f
+}
 
-		mockRepo.On("Update", mock.Anything, mock.MatchedBy(func(updatedTask *entity.Task) bool {
-			return updatedTask.ID == task.ID &&
+func TestTaskWorker_Handle(t *testing.T) {
+	t.Run("successful task handling", func(t *testing.T) {
+		f := setupFixture()
+
+		f.mockRepo.On("Update", mock.Anything, mock.MatchedBy(func(updatedTask *entity.Task) bool {
+			return updatedTask.ID == f.task.ID &&
 				updatedTask.Status == entity.TaskStatusCompleted
 		})).Return(nil)
 
-		worker.handle(ctx, task)
+		f.worker.handle(f.ctx, f.task)
 
-		assert.Equal(t, entity.TaskStatusCompleted, task.Status)
-		mockRepo.AssertExpectations(t)
+		assert.Equal(t, entity.TaskStatusCompleted, f.task.Status)
+		f.mockRepo.AssertExpectations(t)
 	})
 
 	t.Run("repository error on update", func(t *testing.T) {
-		mockRepo := testmock.NewTaskRepository()
-		taskChannel := make(chan *entity.Task, 10)
-		cfg := config.Config{
-			TaskWorker: config.TaskWorker{
-				Workers: 1,
-			},
-		}
-
-		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
-
-		task := &entity.Task{
-			ID:          1,
-			Title:       "Test Task",
-			Description: "Test Description",
-			Status:      entity.TaskStatusPending,
-		}
+		f := setupFixture()
 
 		expectedError := errors.New("database connection failed")
-		mockRepo.On("Update", mock.Anything, mock.Anything).Return(expectedError)
+		f.mockRepo.On("Update", mock.Anything, mock.Anything).Return(expectedError)
 
-		worker.handle(ctx, task)
+		f.worker.handle(f.ctx, f.task)
 
 		// Task should still be completed even if update fails
-		assert.Equal(t, entity.TaskStatusCompleted, task.Status)
-		mockRepo.AssertExpectations(t)
+		assert.Equal(t, entity.TaskStatusCompleted, f.task.Status)
+		f.mockRepo.AssertExpectations(t)
 	})
 }
 
 func TestTaskWorker_Run(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("worker starts with correct number of goroutines", func(t *testing.T) {
-		mockRepo := testmock.NewTaskRepository()
-		taskChannel := make(chan *entity.Task, 10)
-		cfg := config.Config{
-			TaskWorker: config.TaskWorker{
-				Workers: 1,
-			},
-		}
+		f := setupFixture()
 
-		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
-
-		worker.Run(ctx)
+		f.worker.Run(f.ctx)
 
 		// Give workers time to start
 		time.Sleep(100 * time.Millisecond)
 
 		// Verify workers are running by checking if they can process tasks
-		task := &entity.Task{
-			ID:          1,
-			Title:       "Test Task",
-			Description: "Test Description",
-			Status:      entity.TaskStatusPending,
-		}
+		f.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
-		mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
-
-		taskChannel <- task
+		f.taskChannel <- f.task
 
 		// Wait for task to be processed (handle sleeps 1-5 seconds)
 		time.Sleep(6 * time.Second)
 
-		assert.Equal(t, entity.TaskStatusCompleted, task.Status)
-		mockRepo.AssertExpectations(t)
+		assert.Equal(t, entity.TaskStatusCompleted, f.task.Status)
+		f.mockRepo.AssertExpectations(t)
 
 		// Cleanup
-		cancelCtx, cancel := context.WithCancel(ctx)
+		cancelCtx, cancel := context.WithCancel(f.ctx)
 		cancel()
-		worker.wroker(cancelCtx)
-		worker.wg.Wait()
+		f.worker.wroker(cancelCtx)
+		f.worker.wg.Wait()
 	})
 }
 
 func TestTaskWorker_wroker(t *testing.T) {
 	t.Run("worker processes tasks from channel", func(t *testing.T) {
-		ctx := context.Background()
-		mockRepo := testmock.NewTaskRepository()
-		taskChannel := make(chan *entity.Task, 10)
-		cfg := config.Config{
-			TaskWorker: config.TaskWorker{
-				Workers: 1,
-			},
-		}
+		f := setupFixture()
 
-		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
-
-		task := &entity.Task{
-			ID:          1,
-			Title:       "Test Task",
-			Description: "Test Description",
-			Status:      entity.TaskStatusPending,
-		}
-
-		mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
+		f.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
 
 		// Start worker in goroutine
-		worker.wg.Add(1)
-		go worker.wroker(ctx)
+		f.worker.wg.Add(1)
+		go f.worker.wroker(f.ctx)
 
 		// Send task to channel
-		taskChannel <- task
+		f.taskChannel <- f.task
 
 		// Wait for task to be processed (handle sleeps 1-5 seconds)
 		time.Sleep(6 * time.Second)
 
-		assert.Equal(t, entity.TaskStatusCompleted, task.Status)
-		mockRepo.AssertExpectations(t)
+		assert.Equal(t, entity.TaskStatusCompleted, f.task.Status)
+		f.mockRepo.AssertExpectations(t)
 
 		// Cleanup: cancel context to stop worker
-		cancelCtx, cancel := context.WithCancel(ctx)
+		cancelCtx, cancel := context.WithCancel(f.ctx)
 		cancel()
-		worker.wroker(cancelCtx)
-		worker.wg.Wait()
+		f.worker.wroker(cancelCtx)
+		f.worker.wg.Wait()
 	})
 
 	t.Run("worker stops on context cancellation", func(t *testing.T) {
-		mockRepo := testmock.NewTaskRepository()
-		taskChannel := make(chan *entity.Task, 10)
-		cfg := config.Config{
-			TaskWorker: config.TaskWorker{
-				Workers: 1,
-			},
-		}
-
-		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
+		f := setupFixture()
 
 		ctx, cancel := context.WithCancel(context.Background())
 
 		// Start worker
-		worker.wg.Add(1)
-		go worker.wroker(ctx)
+		f.worker.wg.Add(1)
+		go f.worker.wroker(ctx)
 
 		// Give worker time to start
 		time.Sleep(100 * time.Millisecond)
@@ -187,7 +149,7 @@ func TestTaskWorker_wroker(t *testing.T) {
 		// Wait for worker to finish
 		done := make(chan bool)
 		go func() {
-			worker.wg.Wait()
+			f.worker.wg.Wait()
 			done <- true
 		}()
 
@@ -200,16 +162,7 @@ func TestTaskWorker_wroker(t *testing.T) {
 	})
 
 	t.Run("worker processes multiple tasks", func(t *testing.T) {
-		ctx := context.Background()
-		mockRepo := testmock.NewTaskRepository()
-		taskChannel := make(chan *entity.Task, 10)
-		cfg := config.Config{
-			TaskWorker: config.TaskWorker{
-				Workers: 1,
-			},
-		}
-
-		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
+		f := setupFixture()
 
 		task1 := &entity.Task{
 			ID:          1,
@@ -225,28 +178,28 @@ func TestTaskWorker_wroker(t *testing.T) {
 			Status:      entity.TaskStatusPending,
 		}
 
-		mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Twice()
+		f.mockRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Twice()
 
 		// Start worker
-		worker.wg.Add(1)
-		go worker.wroker(ctx)
+		f.worker.wg.Add(1)
+		go f.worker.wroker(f.ctx)
 
 		// Send tasks to channel
-		taskChannel <- task1
-		taskChannel <- task2
+		f.taskChannel <- task1
+		f.taskChannel <- task2
 
 		// Wait for tasks to be processed (handle sleeps 1-5 seconds per task)
 		time.Sleep(12 * time.Second)
 
 		assert.Equal(t, entity.TaskStatusCompleted, task1.Status)
 		assert.Equal(t, entity.TaskStatusCompleted, task2.Status)
-		mockRepo.AssertExpectations(t)
+		f.mockRepo.AssertExpectations(t)
 
 		// Cleanup
-		cancelCtx, cancel := context.WithCancel(ctx)
+		cancelCtx, cancel := context.WithCancel(f.ctx)
 		cancel()
-		worker.wroker(cancelCtx)
-		worker.wg.Wait()
+		f.worker.wroker(cancelCtx)
+		f.worker.wg.Wait()
 	})
 }
 
