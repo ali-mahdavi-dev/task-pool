@@ -55,7 +55,7 @@ graph TD
 
     style A fill:#e1f5ff
     style B fill:#fff4e1
-    style C fill:#e8f5e9
+    style C fill:#f8fcf9
     style D fill:#f3e5f5
     style E fill:#fce4ec
 ```
@@ -329,9 +329,9 @@ graph TD
 
     style A fill:#e1f5ff
     style B fill:#fff4e1
-    style C1 fill:#e8f5e9
-    style C2 fill:#e8f5e9
-    style C3 fill:#e8f5e9
+    style C1 fill:#f8fcf9
+    style C2 fill:#f8fcf9
+    style C3 fill:#f8fcf9
     style D fill:#fce4ec
 ```
 
