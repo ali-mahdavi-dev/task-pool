@@ -87,7 +87,7 @@ func bootstrap(app *fiber.App, cfg config.Config) (*bootstrapResult, error) {
 	})
 
 	// Initialize worker
-	taskWorker := worker.NewTaskWorker(taskRepository, cfg, taskChannel)
+	taskWorker := worker.NewTaskWorker(taskRepository, uint64(cfg.TaskWorker.Workers), taskChannel)
 
 	// Start worker with context
 	taskWorker.Run(context.Background())

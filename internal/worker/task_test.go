@@ -25,7 +25,7 @@ func TestTaskWorker_Handle(t *testing.T) {
 			},
 		}
 
-		worker := NewTaskWorker(mockRepo, cfg, taskChannel).(*taskWorker[*entity.Task])
+		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
 
 		task := &entity.Task{
 			ID:          1,
@@ -54,7 +54,7 @@ func TestTaskWorker_Handle(t *testing.T) {
 			},
 		}
 
-		worker := NewTaskWorker(mockRepo, cfg, taskChannel).(*taskWorker[*entity.Task])
+		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
 
 		task := &entity.Task{
 			ID:          1,
@@ -86,7 +86,7 @@ func TestTaskWorker_Run(t *testing.T) {
 			},
 		}
 
-		worker := NewTaskWorker(mockRepo, cfg, taskChannel).(*taskWorker[*entity.Task])
+		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
 
 		worker.Run(ctx)
 
@@ -130,7 +130,7 @@ func TestTaskWorker_wroker(t *testing.T) {
 			},
 		}
 
-		worker := NewTaskWorker(mockRepo, cfg, taskChannel).(*taskWorker[*entity.Task])
+		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
 
 		task := &entity.Task{
 			ID:          1,
@@ -170,7 +170,7 @@ func TestTaskWorker_wroker(t *testing.T) {
 			},
 		}
 
-		worker := NewTaskWorker(mockRepo, cfg, taskChannel).(*taskWorker[*entity.Task])
+		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
 
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -209,7 +209,7 @@ func TestTaskWorker_wroker(t *testing.T) {
 			},
 		}
 
-		worker := NewTaskWorker(mockRepo, cfg, taskChannel).(*taskWorker[*entity.Task])
+		worker := NewTaskWorker(mockRepo, uint64(cfg.TaskWorker.Workers), taskChannel).(*taskWorker[*entity.Task])
 
 		task1 := &entity.Task{
 			ID:          1,

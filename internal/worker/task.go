@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/rand"
 	"sync"
-	"task-pool/config"
 	"task-pool/internal/domain/entity"
 	"task-pool/internal/domain/repository"
 	"task-pool/pkg/logger"
@@ -13,7 +12,7 @@ import (
 
 type taskWorker[T any] struct {
 	ctx            context.Context
-	cfg            config.Config
+	workersCount            uint64
 	taskChannel    chan *entity.Task
 	taskRepository repository.TaskRepository
 	wg             sync.WaitGroup
@@ -21,11 +20,11 @@ type taskWorker[T any] struct {
 
 func NewTaskWorker(
 	taskRepository repository.TaskRepository,
-	cfg config.Config,
+	workersCount uint64,
 	taskChannel chan *entity.Task,
 ) Worker[*entity.Task] {
 	return &taskWorker[*entity.Task]{
-		cfg:            cfg,
+		workersCount:            workersCount,
 		taskChannel:    taskChannel,
 		taskRepository: taskRepository,
 		wg:             sync.WaitGroup{},
@@ -34,7 +33,7 @@ func NewTaskWorker(
 
 func (w *taskWorker[T]) Run(ctx context.Context) {
 	w.ctx = ctx
-	for i := 0; i < w.cfg.TaskWorker.Workers; i++ {
+	for i := 0; i < int(w.workersCount); i++ {
 		w.wg.Add(1)
 		go w.wroker(ctx)
 	}
