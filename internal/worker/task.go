@@ -12,7 +12,7 @@ import (
 
 type taskWorker[T any] struct {
 	ctx            context.Context
-	workersCount            uint64
+	workersCount   uint64
 	taskChannel    chan *entity.Task
 	taskRepository repository.TaskRepository
 	wg             sync.WaitGroup
@@ -24,7 +24,7 @@ func NewTaskWorker(
 	taskChannel chan *entity.Task,
 ) Worker[*entity.Task] {
 	return &taskWorker[*entity.Task]{
-		workersCount:            workersCount,
+		workersCount:   workersCount,
 		taskChannel:    taskChannel,
 		taskRepository: taskRepository,
 		wg:             sync.WaitGroup{},

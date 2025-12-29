@@ -13,10 +13,10 @@ const (
 )
 
 type Task struct {
-	ID uint64 `gorm:"primaryKey"`
-	Title string
+	ID          uint64 `gorm:"primaryKey"`
+	Title       string
 	Description string
-	Status TaskStatus
+	Status      TaskStatus
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

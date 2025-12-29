@@ -16,7 +16,7 @@ import (
 	"task-pool/internal/worker"
 	"task-pool/pkg/logger"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

@@ -1,10 +1,10 @@
 package apperror
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
-func HandleError(c *fiber.Ctx, err error) error {
+func HandleError(c fiber.Ctx, err error) error {
 	if err == nil {
 		return nil
 	}

@@ -3,7 +3,8 @@ package entrypoint
 import (
 	"task-pool/internal/entrypoint/handler"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/swagger/v2"
 )
 
 type HandlerOptions struct {
@@ -11,9 +12,18 @@ type HandlerOptions struct {
 }
 
 func RegisterHttpHandlers(app *fiber.App, options HandlerOptions) {
-	app.Get("/health", func(c *fiber.Ctx) error {
+	app.Get("/health", func(c fiber.Ctx) error {
 		return c.SendString("OK")
 	})
+
+	// Swagger
+	app.Get("/swagger.json", func(c fiber.Ctx) error {
+		return c.SendFile("docs/swagger.json")
+	})
+
+	app.Get("/swagger/*", swagger.New(swagger.Config{
+		URL: "/swagger.json",
+	}))
 
 	apiV1 := app.Group("/api/v1")
 	taskGroup := apiV1.Group("/tasks")

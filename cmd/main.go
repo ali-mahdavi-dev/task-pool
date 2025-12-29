@@ -10,7 +10,7 @@ func init() {
 	log.SetFlags(log.Lshortfile)
 }
 
-// @title					task-pool API Documentation
+// @title						task-pool API Documentation
 // @version					1.0.0
 // @description				task-pool API documentation
 // @schemes					http https

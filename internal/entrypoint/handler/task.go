@@ -5,7 +5,7 @@ import (
 	"task-pool/internal/service/contracts"
 	"task-pool/pkg/apperror"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 type TaskHandler struct {
@@ -16,9 +16,9 @@ func NewTaskHandler(taskService contracts.TaskService) *TaskHandler {
 	return &TaskHandler{taskService: taskService}
 }
 
-func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
+func (h *TaskHandler) CreateTask(c fiber.Ctx) error {
 	var command contracts.CreateTask
-	if err := c.BodyParser(&command); err != nil {
+	if err := c.Bind().Body(&command); err != nil {
 		return apperror.HandleError(c, err)
 	}
 
@@ -32,7 +32,7 @@ func (h *TaskHandler) CreateTask(c *fiber.Ctx) error {
 	})
 }
 
-func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
+func (h *TaskHandler) GetTaskByID(c fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -47,7 +47,7 @@ func (h *TaskHandler) GetTaskByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(task)
 }
 
-func (h *TaskHandler) GetAllTasks(c *fiber.Ctx) error {
+func (h *TaskHandler) GetAllTasks(c fiber.Ctx) error {
 	tasks, err := h.taskService.GetAll(c.Context())
 	if err != nil {
 		return apperror.HandleError(c, err)

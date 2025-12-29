@@ -9,6 +9,9 @@ run:
 test:
 	go test ./...
 
+swagger:
+	swag fmt && swag init -g ./cmd/main.go -o ./docs --parseInternal=true --parseDependency=true
+
 clean:
 	rm -f task-pool
 	go clean
