@@ -1,4 +1,4 @@
-# Task Pool API - پروژه مصاحبه
+# Task Pool API
 
 یک سرویس REST API برای مدیریت و پردازش غیرهمزمان تسک‌ها با استفاده از Go و معماری Clean Architecture.
 
@@ -21,26 +21,12 @@
 
 ### هدف پروژه
 
-نمایش مهارت‌های زیر در مصاحبه:
-
 - پیاده‌سازی Clean Architecture
 - استفاده از Design Patterns (Repository, Service Layer)
 - پیاده‌سازی Worker Pool برای پردازش غیرهمزمان
 - نوشتن تست‌های واحد و همزمانی
 - مدیریت خطا و Logging
 - استفاده از Docker و Docker Compose
-
-## ویژگی‌های کلیدی
-
-✅ **Clean Architecture**: جداسازی لایه‌ها و وابستگی‌های معکوس  
-✅ **Worker Pool Pattern**: پردازش غیرهمزمان تسک‌ها با چند Worker  
-✅ **Repository Pattern**: جداسازی منطق دسترسی به داده  
-✅ **Error Handling**: مدیریت خطا با ساختار مشخص  
-✅ **Structured Logging**: استفاده از Zerolog برای لاگ‌های ساختاریافته  
-✅ **Unit Tests**: تست‌های واحد با پوشش مناسب  
-✅ **Concurrent Tests**: تست‌های همزمانی برای Worker Pool  
-✅ **Docker Support**: پشتیبانی کامل از Docker و Docker Compose  
-✅ **Configuration Management**: مدیریت تنظیمات با envconfig
 
 ## معماری و طراحی
 
