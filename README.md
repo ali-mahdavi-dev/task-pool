@@ -60,50 +60,6 @@ graph TD
     style E fill:#fce4ec
 ```
 
-### ساختار پوشه‌ها
-
-```mermaid
-graph TD
-    Root[interview/] --> Internal[internal/]
-    Root --> Pkg[pkg/]
-    Root --> Cmd[cmd/]
-
-    Internal --> Domain[domain/<br/>Domain Layer]
-    Internal --> Service[service/<br/>Service Layer]
-    Internal --> Adapter[adapter/<br/>Infrastructure Layer]
-    Internal --> Entrypoint[entrypoint/<br/>Presentation Layer]
-    Internal --> Worker[worker/<br/>Background Processing]
-
-    Domain --> Entity[entity/<br/>Domain Entities]
-    Domain --> RepoInterface[repository/<br/>Repository Interfaces]
-
-    Service --> Contracts[contracts/<br/>Service Interfaces]
-    Service --> TaskService[task.go<br/>Task Service Implementation]
-
-    Adapter --> RepoImpl[repository/<br/>Repository Implementations]
-    RepoImpl --> Postgres[postgres/<br/>PostgreSQL Implementation]
-
-    Entrypoint --> Handler[handler/<br/>HTTP Handlers]
-
-    Worker --> WorkerInterface[worker.go<br/>Worker Interface]
-    Worker --> TaskWorker[task.go<br/>Task Worker Implementation]
-
-    Pkg --> AppError[apperror/<br/>Error Handling]
-    Pkg --> Logger[logger/<br/>Logging Utilities]
-
-    Cmd --> Command[command/<br/>CLI Commands]
-
-    style Root fill:#e1f5ff
-    style Internal fill:#fff4e1
-    style Domain fill:#e8f5e9
-    style Service fill:#f3e5f5
-    style Adapter fill:#fce4ec
-    style Entrypoint fill:#e1f5ff
-    style Worker fill:#fff9c4
-    style Pkg fill:#f1f8e9
-    style Cmd fill:#fce4ec
-```
-
 ### Design Patterns استفاده شده
 
 1. **Repository Pattern**: جداسازی منطق دسترسی به داده
