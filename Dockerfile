@@ -17,6 +17,7 @@ FROM alpine:latest
 WORKDIR /root/
 
 COPY --from=builder /app/task-pool .
+COPY --from=builder /app/docs ./docs
 
 EXPOSE 8080
 
